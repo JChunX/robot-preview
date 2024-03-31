@@ -1,0 +1,24 @@
+# .gitignore
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore all log files
+*.log
+
+# Ignore the build output directory
+out/
+
+# Ignore the .vscode directory
+.vscode/
+
+# Ignore TypeScript build output
+**/*.js
+**/*.js.map
+**/*.d.ts
+
+# Ignore package-lock.json to avoid conflicts
+package-lock.json
+
+# Ignore any .env files
+*.env
