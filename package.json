@@ -9,31 +9,34 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
-  "main": "./out/extension.js",
+  "activationEvents": [
+    "onWebviewPanel:robotPreview"
+  ],
+  "main": "./dist/extension",
   "contributes": {
     "commands": [
       {
-        "command": "robot-preview.helloWorld",
-        "title": "Robot Preview: Hello World"
-      },
-      {
-        "command": "robot-preview.preview",
-        "title": "Robot Preview: Preview"
+        "command": "robot-preview.previewRobot",
+        "title": "Robot Preview: Preview robot"
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    
+    "compile": "npm run package",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "pretest": "npm run compile && npm run lint",
+    "test": "vscode-test",
+    "vscode:prepublish": "npm run compile",
+    "webpack": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "test-compile": "npm run webpack"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/three": "^0.163.0",
     "@types/vscode": "^1.87.0",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
@@ -46,6 +49,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "three": "^0.163.0"
+    "three": "^0.163.0",
+    "urdf-loader": "^0.12.1"
   }
 }
