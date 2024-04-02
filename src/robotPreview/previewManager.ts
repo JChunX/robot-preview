@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from "path";
 
-import * as extension from "../extension";
 import RobotPreview from './preview';
 
 export default class RobotPreviewManager implements vscode.WebviewPanelSerializer {
@@ -79,6 +78,17 @@ export default class RobotPreviewManager implements vscode.WebviewPanelSerialize
         preview: RobotPreview
     ): RobotPreview {
         this._previews.push(preview);
+
+        preview.onDispose(() => {
+            const existing = this._previews.indexOf(preview);
+            if (existing === -1) {
+                return;
+            }
+            this._previews.splice(existing, 1);
+            if (this._activePreview === preview) {
+                this._activePreview = undefined;
+            }
+        });
 
         preview.onDidChangeViewState(({ webviewPanel }: { webviewPanel: vscode.WebviewPanel }) => {
             this._activePreview = webviewPanel.active ? preview : undefined;

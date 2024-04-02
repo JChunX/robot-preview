@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
-import { Disposable, window } from 'vscode';
-import * as path from "path";
+import { Disposable } from 'vscode';
 import * as extension from "../extension";
-import * as THREE from 'three';
-import URDFLoader from 'urdf-loader';
 
 export default class RobotPreview {
     private _resource: vscode.Uri;
     private _processing: boolean;
-    private _context: vscode.ExtensionContext;
     private _disposables: Disposable[] = [];
+    private _context: vscode.ExtensionContext;
+    private _messageQueue: any[];
+    private _webviewReady: boolean;
+    private _maxQueueSize: number = 10;
     _robotEditor: vscode.TextEditor | undefined;
     _webview: vscode.WebviewPanel;
 
@@ -23,20 +23,13 @@ export default class RobotPreview {
         context: vscode.ExtensionContext,
         resource: vscode.Uri
     ): RobotPreview {
-        // Create and show a new webview
         var editor = vscode.window.createWebviewPanel(
-            'robotPreview', // Identifies the type of the webview. Used internally
-            'Robot Preview', // Title of the panel displayed to the user
-            vscode.ViewColumn.Two, // Editor column to show the new webview panel in.
+            'robotPreview',
+            'Robot Preview',
+            vscode.ViewColumn.Two,
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
-
-                // localResourceRoots: [
-                //     vscode.Uri.joinPath(context.extensionUri, 'assets'),
-                //     vscode.Uri.joinPath(context.extensionUri, 'dist'),
-                    
-                // ]
             }
         );
 
@@ -52,6 +45,8 @@ export default class RobotPreview {
         this._context = context;
         this._resource = resource;
         this._processing = false;
+        this._messageQueue = [];
+        this._webviewReady = false;
 
         let subscriptions: Disposable[] = [];
 
@@ -146,11 +141,10 @@ export default class RobotPreview {
 
     private async loadResource() {
         this._processing = true;
-        // console.log("Loading resource");
         try {
             const robotUri = this._webview.webview.asWebviewUri(this._resource);
             
-            this._webview.webview.postMessage({
+            this.queueMessage({
                 command: 'loadRobot',
                 robot: robotUri.toString()
             });
@@ -163,6 +157,7 @@ export default class RobotPreview {
 
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         const webviewUri = this.getUri(webview, extensionUri, ["dist", "webview.js"]);
+        const cssUri = this.getUri(webview, extensionUri, ["dist", "styles.css"]);
         const nonce = this.getNonce();
 
         return /*html*/ `
@@ -171,28 +166,35 @@ export default class RobotPreview {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style nonce="${nonce}">
-                html,
-                body {
-                overflow: hidden;
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                }
-
-                #renderCanvas {
-                width: 100%;
-                height: 100%;
-                touch-action: none;
-                }
-            </style>
+                <link rel="stylesheet" href="${cssUri}" nonce="${nonce}">
             <title>URDF Preview</title>
             </head>
             <body>
-                <h1 id="heading">hello world</h1>
+                <div id="menu">
+                    <div id="controls" class="hidden">
+                        <div id="toggle-controls"></div>
+                        <div id="ignore-joint-limits" class="toggle">Ignore Joint Limits</div>
+                        <div id="radians-toggle" class="toggle">Use Radians</div>
+                        <div id="autocenter-toggle" class="toggle checked">Autocenter</div>
+                        <div id="collision-toggle" class="toggle">Show Collision</div>
+                        <label>
+                            Up Axis
+                            <select id="up-select">
+                                <option value="+X">+X</option>
+                                <option value="-X">-X</option>
+                                <option value="+Y">+Y</option>
+                                <option value="-Y">-Y</option>
+                                <option value="+Z">+Z</option>
+                                <option value="-Z" selected>-Z</option>
+                            </select>
+                        </label>
+                        <ul></ul>
+                    </div>
+                </div>
                 
+                <robot-viewer up="-Z" display-shadow tabindex="0"></robot-viewer>
                 <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
+
             </body>
             </html>
         `;
@@ -211,6 +213,17 @@ export default class RobotPreview {
         return text;
     }
 
+    private queueMessage(message: any) {
+        if (this._webviewReady) {
+            this._webview.webview.postMessage(message);
+        } else {
+            this._messageQueue.push(message);
+            if (this._messageQueue.length > this._maxQueueSize) {
+                this._messageQueue.shift();
+            }
+        }
+    }
+
     private _setWebviewMessageListener(webview: vscode.Webview) {
         webview.onDidReceiveMessage(
         (message: any) => {
@@ -218,6 +231,13 @@ export default class RobotPreview {
             const text = message.text;
     
             switch (command) {
+            case "webviewReady":
+                this._webviewReady = true;
+                this._messageQueue.forEach((message) => {
+                    this._webview.webview.postMessage(message);
+                });
+                this._messageQueue = [];
+                return;
             case "info":
                 vscode.window.showInformationMessage(text);
                 return;
