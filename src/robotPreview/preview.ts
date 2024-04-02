@@ -95,6 +95,7 @@ export default class RobotPreview {
     }
 
     public async refresh() {
+        console.log('refreshing');
         if (this._processing === false) {
             this.loadResource();
         }
