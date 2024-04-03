@@ -185,15 +185,15 @@ export default class RobotPreview {
                                 <option value="-X">-X</option>
                                 <option value="+Y">+Y</option>
                                 <option value="-Y">-Y</option>
-                                <option value="+Z">+Z</option>
-                                <option value="-Z" selected>-Z</option>
+                                <option value="+Z" selected>+Z</option>
+                                <option value="-Z">-Z</option>
                             </select>
                         </label>
                         <ul></ul>
                     </div>
                 </div>
                 
-                <robot-viewer up="-Z" display-shadow tabindex="0"></robot-viewer>
+                <robot-viewer up="+Z" display-shadow tabindex="0"></robot-viewer>
                 <script type="module" nonce="${nonce}" src="${webviewUri}"></script>
 
             </body>

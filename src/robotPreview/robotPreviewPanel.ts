@@ -103,6 +103,9 @@ viewer.addEventListener('manipulate-end', (e: MouseEvent) => {
 viewer.addEventListener('robot-processed', () => {
 
     const r = viewer.robot;
+    while (sliderList.firstChild) {
+        sliderList.removeChild(sliderList.firstChild);
+    }
     Object
         .keys(r.joints)
         .sort((a, b) => {
@@ -264,7 +267,7 @@ function main() {
         }
     });
 
-    viewer.camera.position.set(-5.5, 3.5, 5.5);
+    viewer.camera.position.set(5.5, 3.5, -5.5);
     setColor('#8495ED');
 }
 

@@ -1,6 +1,6 @@
-# robot-preview README
+# robot-preview
 
-This is the README for your extension "robot-preview". After writing up a brief description, we recommend including the following sections.
+Platform-agnostic, multi-modal robot previews in Visual Studio Code.
 
 ## Features
 
