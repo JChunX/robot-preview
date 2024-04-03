@@ -22,3 +22,5 @@ package-lock.json
 
 # Ignore any .env files
 *.env
+
+.DS_Store
